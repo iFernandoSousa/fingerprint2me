@@ -218,7 +218,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔍 Advanced Browser Fingerprint Generator</h1>
+        <h1>🫆 Fingerprint2.me</h1>
         
         <div class="id-display">
             <span class="id-label">Your Browser Fingerprint:</span>
@@ -226,19 +226,17 @@
         </div>
         
         <div class="button-group">
-            <button class="btn" onclick="generateNewId()">🔄 Generate New ID</button>
-            <button class="btn btn-success" onclick="exportCleanData()">📤 Export Data</button>
-            <button class="btn btn-secondary" onclick="clearData()">🗑️ Clear Data</button>
+        <button class="btn btn-success" onclick="exportCleanData()">📥 Export Data</button>
         </div>
         
         <div class="tabs">
-            <button class="tab active" onclick="showTab('overview')">📋 Overview</button>
-            <button class="tab" onclick="showTab('browser')">🌐 Browser</button>
-            <button class="tab" onclick="showTab('system')">💻 System</button>
-            <button class="tab" onclick="showTab('hardware')">🔧 Hardware</button>
-            <button class="tab" onclick="showTab('privacy')">🛡️ Privacy</button>
-            <button class="tab" onclick="showTab('advanced')">⚡ Advanced</button>
-            <button class="tab" onclick="showTab('raw')">📄 Raw Data</button>
+            <button class="tab active" data-tab="overview">📋 Overview</button>
+            <button class="tab" data-tab="browser">🌐 Browser</button>
+            <button class="tab" data-tab="system">💻 System</button>
+            <button class="tab" data-tab="hardware">🔧 Hardware</button>
+            <button class="tab" data-tab="privacy">🛡️ Privacy</button>
+            <button class="tab" data-tab="advanced">⚡ Advanced</button>
+            <button class="tab" data-tab="raw">📄 Raw Data</button>
         </div>
         
         <div id="overview" class="tab-content active">
@@ -251,38 +249,28 @@
         </div>
         
         <div id="browser" class="tab-content">
-            <div class="data-grid" id="browserGrid">
-                <!-- Browser data will be populated here -->
-            </div>
+            <div class="data-grid" id="browserGrid"></div>
         </div>
         
         <div id="system" class="tab-content">
-            <div class="data-grid" id="systemGrid">
-                <!-- System data will be populated here -->
-            </div>
+            <div class="data-grid" id="systemGrid"></div>
         </div>
         
         <div id="hardware" class="tab-content">
-            <div class="data-grid" id="hardwareGrid">
-                <!-- Hardware data will be populated here -->
-            </div>
+            <div class="data-grid" id="hardwareGrid"></div>
         </div>
         
         <div id="privacy" class="tab-content">
-            <div class="data-grid" id="privacyGrid">
-                <!-- Privacy detection data will be populated here -->
-            </div>
+            <div class="data-grid" id="privacyGrid"></div>
         </div>
         
         <div id="advanced" class="tab-content">
-            <div class="data-grid" id="advancedGrid">
-                <!-- Advanced fingerprinting data will be populated here -->
-            </div>
+            <div class="data-grid" id="advancedGrid"></div>
         </div>
         
         <div id="raw" class="tab-content">
             <div class="comparison-section">
-                <h3>Hash Data (Stable)</h3>
+                <h3>Stable Data</h3>
                 <pre id="hashDataRaw" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;"></pre>
             </div>
             <div class="comparison-section">
@@ -299,424 +287,258 @@
         </div>
     </div>
 
-    <!-- Include ClientJS library -->
+    <!-- Load ClientJS and fingerprint2me.js -->
     <script src="client.min.js"></script>
+    <script src="fingerprint2me.js"></script>
     <script>
-        // Check if ClientJS loaded successfully
-        window.addEventListener('load', function() {
-            if (typeof ClientJS !== 'undefined') {
-                window.dispatchEvent(new Event('clientjs-loaded'));
-            } else {
-                document.getElementById('uniqueId').textContent = 'Failed to load ClientJS library';
-            }
-        });
-    </script>
-    <script src="script.js"></script>
-    <script>
-        // Tab functionality
-        function showTab(tabName) {
-            // Hide all tab contents
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Remove active class from all tabs
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            
-            // Show selected tab content
+    // --- Tab functionality ---
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function(event) {
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            const tabName = this.getAttribute('data-tab');
             document.getElementById(tabName).classList.add('active');
+            this.classList.add('active');
+        });
+    });
+    // --- UI population helpers ---
+    let stableDataCache = null;
+    let allDataCache = null;
+    let uniqueIdCache = null;
+    let confidenceCache = null;
+    let ipDataCache = null;
+    async function refreshFingerprint() {
+        // Add safety checks for DOM elements
+        const uniqueIdElement = document.getElementById('uniqueId');
+        const statusValueElement = document.getElementById('statusValue');
+        
+        if (uniqueIdElement) {
+            uniqueIdElement.textContent = 'Generating...';
+        }
+        if (statusValueElement) {
+            statusValueElement.innerHTML = '<span class="status-indicator status-info"></span>Loading...';
+        }
+        
+        try {
+            const { getUniqueVisitorId, getStableDeviceData, getAllDeviceData } = window.fingerprint2me;
+            const [idResult, stableData, allData] = await Promise.all([
+                getUniqueVisitorId(),
+                getStableDeviceData(),
+                getAllDeviceData()
+            ]);
+            uniqueIdCache = idResult.uniqueVisitorId;
+            confidenceCache = idResult.confidence;
+            ipDataCache = idResult.ipData;
+            stableDataCache = stableData;
+            allDataCache = allData;
             
-            // Add active class to clicked tab
-            event.target.classList.add('active');
-        }
-        
-
-        
-        // Clear data functionality
-        function clearData() {
-            if (confirm('Are you sure you want to clear all displayed data?')) {
-                document.getElementById('uniqueId').textContent = 'Data cleared';
-                const grids = ['overviewGrid', 'browserGrid', 'systemGrid', 'hardwareGrid', 'privacyGrid', 'advancedGrid'];
-                grids.forEach(gridId => {
-                    const grid = document.getElementById(gridId);
-                    if (grid) grid.innerHTML = '';
-                });
-                document.getElementById('hashDataRaw').textContent = '';
-                document.getElementById('allDataRaw').textContent = '';
-                window.currentFingerprintData = null;
+            // Safely update DOM elements
+            if (uniqueIdElement) {
+                uniqueIdElement.textContent = uniqueIdCache;
+            }
+            if (statusValueElement) {
+                statusValueElement.innerHTML = '<span class="status-indicator status-success"></span>Active';
+            }
+            populateOverviewGrid();
+            populateBrowserGrid();
+            populateSystemGrid();
+            populateHardwareGrid();
+            populatePrivacyGrid();
+            populateAdvancedGrid();
+            populateRawData();
+        } catch (e) {
+            console.error('Error generating fingerprint:', e);
+            
+            // Safely update DOM elements on error
+            if (uniqueIdElement) {
+                uniqueIdElement.textContent = 'Error generating ID';
+            }
+            if (statusValueElement) {
+                statusValueElement.innerHTML = '<span class="status-indicator status-error"></span>Error';
             }
         }
+    }
+    function populateOverviewGrid() {
+        const grid = document.getElementById('overviewGrid');
+        if (!grid) return;
+        grid.innerHTML = `
+            <div class="data-item">
+                <span class="data-label">Status:</span>
+                <span class="data-value"><span class="status-indicator status-success"></span>Active</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">Hash:</span>
+                <span class="data-value">${uniqueIdCache}</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">Confidence:</span>
+                <span class="data-value">${confidenceCache.score}% (${confidenceCache.level})</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">Timezone:</span>
+                <span class="data-value">${stableDataCache.timezone}</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">IP Timezone:</span>
+                <span class="data-value">${ipDataCache && ipDataCache.timezone ? ipDataCache.timezone : 'N/A'}</span>
+            </div>
+            <div class="data-item">
+                <span class="data-label">IP:</span>
+                <span class="data-value">${ipDataCache && ipDataCache.ip ? ipDataCache.ip : 'N/A'}</span>
+            </div>
+        `;
+    }
+    function populateBrowserGrid() {
+        const grid = document.getElementById('browserGrid');
+        if (!grid || !stableDataCache) return;
+        const d = stableDataCache;
+        grid.innerHTML = `
+            <div class="data-item"><span class="data-label">User Agent:</span><span class="data-value">${d.userAgent}</span></div>
+            <div class="data-item"><span class="data-label">Browser:</span><span class="data-value">${d.browser} ${d.browserVersion}</span></div>
+            <div class="data-item"><span class="data-label">Engine:</span><span class="data-value">${d.engine} ${d.engineVersion}</span></div>
+            <div class="data-item"><span class="data-label">Language:</span><span class="data-value">${d.language} (${d.systemLanguage})</span></div>
+            <div class="data-item"><span class="data-label">Timezone:</span><span class="data-value">${d.timezone}</span></div>
+            <div class="data-item"><span class="data-label">Is Chrome:</span><span class="data-value">${d.isChrome}</span></div>
+            <div class="data-item"><span class="data-label">Is Firefox:</span><span class="data-value">${d.isFirefox}</span></div>
+            <div class="data-item"><span class="data-label">Is Safari:</span><span class="data-value">${d.isSafari}</span></div>
+            <div class="data-item"><span class="data-label">Is IE:</span><span class="data-value">${d.isIE}</span></div>
+            <div class="data-item"><span class="data-label">Is Opera:</span><span class="data-value">${d.isOpera}</span></div>
+            <div class="data-item"><span class="data-label">Is Mobile:</span><span class="data-value">${d.isMobile}</span></div>
+            <div class="data-item"><span class="data-label">WebDriver:</span><span class="data-value">${d.webdriver}</span></div>
+            <div class="data-item"><span class="data-label">Do Not Track:</span><span class="data-value">${d.doNotTrack}</span></div>
+        `;
+    }
+    function populateSystemGrid() {
+        const grid = document.getElementById('systemGrid');
+        if (!grid || !stableDataCache) return;
+        const d = stableDataCache;
+        grid.innerHTML = `
+            <div class="data-item"><span class="data-label">OS:</span><span class="data-value">${d.os} ${d.osVersion}</span></div>
+            <div class="data-item"><span class="data-label">Is Windows:</span><span class="data-value">${d.isWindows}</span></div>
+            <div class="data-item"><span class="data-label">Is Mac:</span><span class="data-value">${d.isMac}</span></div>
+            <div class="data-item"><span class="data-label">Is Linux:</span><span class="data-value">${d.isLinux}</span></div>
+            <div class="data-item"><span class="data-label">Is Ubuntu:</span><span class="data-value">${d.isUbuntu}</span></div>
+            <div class="data-item"><span class="data-label">Is Solaris:</span><span class="data-value">${d.isSolaris}</span></div>
+            <div class="data-item"><span class="data-label">CPU:</span><span class="data-value">${d.cpu}</span></div>
+            <div class="data-item"><span class="data-label">Device Vendor:</span><span class="data-value">${d.deviceVendor}</span></div>
+        `;
+    }
+    function populateHardwareGrid() {
+        const grid = document.getElementById('hardwareGrid');
+        if (!grid || !stableDataCache) return;
+        const d = stableDataCache;
+        grid.innerHTML = `
+            <div class="data-item"><span class="data-label">Device:</span><span class="data-value">${d.device} (${d.deviceType})</span></div>
+            <div class="data-item"><span class="data-label">Color Depth:</span><span class="data-value">${d.colorDepth}</span></div>
+            <div class="data-item"><span class="data-label">Device X DPI:</span><span class="data-value">${d.deviceXDPI}</span></div>
+            <div class="data-item"><span class="data-label">Device Y DPI:</span><span class="data-value">${d.deviceYDPI}</span></div>
+            <div class="data-item"><span class="data-label">Device Pixel Ratio:</span><span class="data-value">${d.devicePixelRatio}</span></div>
+            <div class="data-item"><span class="data-label">Hardware Concurrency:</span><span class="data-value">${d.hardwareConcurrency}</span></div>
+            <div class="data-item"><span class="data-label">Device Memory:</span><span class="data-value">${d.deviceMemory}</span></div>
+            <div class="data-item"><span class="data-label">Max Touch Points:</span><span class="data-value">${d.maxTouchPoints}</span></div>
+            <div class="data-item"><span class="data-label">Pointer Enabled:</span><span class="data-value">${d.pointerEnabled}</span></div>
+            <div class="data-item"><span class="data-label">Connection Type:</span><span class="data-value">${d.connectionType}</span></div>
+            <div class="data-item"><span class="data-label">Plugins Count:</span><span class="data-value">${d.plugins ? d.plugins.split(',').length : 0}</span></div>
+            <div class="data-item"><span class="data-label">Fonts Count:</span><span class="data-value">${d.fonts ? d.fonts.split(',').length : 0}</span></div>
+            <div class="data-item"><span class="data-label">MIME Types Count:</span><span class="data-value">${d.mimeTypes ? d.mimeTypes.split(',').length : 0}</span></div>
+        `;
+    }
+    function populatePrivacyGrid() {
+        const grid = document.getElementById('privacyGrid');
+        if (!grid || !allDataCache) return;
+        const d = allDataCache;
+        grid.innerHTML = `
+            <div class="data-item"><span class="data-label">Session Storage:</span><span class="data-value">${d.sessionStorage}</span></div>
+            <div class="data-item"><span class="data-label">Local Storage:</span><span class="data-value">${d.localStorage}</span></div>
+            <div class="data-item"><span class="data-label">Cookies:</span><span class="data-value">${d.cookies}</span></div>
+            <div class="data-item"><span class="data-label">Cookie Enabled:</span><span class="data-value">${d.cookieEnabled}</span></div>
+            <div class="data-item"><span class="data-label">Current Resolution:</span><span class="data-value">${d.currentResolution}</span></div>
+            <div class="data-item"><span class="data-label">Available Resolution:</span><span class="data-value">${d.availableResolution}</span></div>
+            <div class="data-item"><span class="data-label">Window Inner Width:</span><span class="data-value">${d.windowInnerWidth}</span></div>
+            <div class="data-item"><span class="data-label">Window Inner Height:</span><span class="data-value">${d.windowInnerHeight}</span></div>
+            <div class="data-item"><span class="data-label">Window Outer Width:</span><span class="data-value">${d.windowOuterWidth}</span></div>
+            <div class="data-item"><span class="data-label">Window Outer Height:</span><span class="data-value">${d.windowOuterHeight}</span></div>
+            <div class="data-item"><span class="data-label">Screen Avail Width:</span><span class="data-value">${d.screenAvailWidth}</span></div>
+            <div class="data-item"><span class="data-label">Screen Avail Height:</span><span class="data-value">${d.screenAvailHeight}</span></div>
+            <div class="data-item"><span class="data-label">Screen Width:</span><span class="data-value">${d.screenWidth}</span></div>
+            <div class="data-item"><span class="data-label">Screen Height:</span><span class="data-value">${d.screenHeight}</span></div>
+        `;
+    }
+    function populateAdvancedGrid() {
+        const grid = document.getElementById('advancedGrid');
+        if (!grid || !stableDataCache) return;
+        const d = stableDataCache;
+        grid.innerHTML = `
+            <div class="data-item"><span class="data-label">Canvas Print:</span><span class="data-value">${d.canvasPrint}</span></div>
+            <div class="data-item"><span class="data-label">Screen Print:</span><span class="data-value">${d.screenPrint}</span></div>
+            <div class="data-item"><span class="data-label">WebGL Fingerprint:</span><span class="data-value">${d.webglFingerprint}</span></div>
+            <div class="data-item"><span class="data-label">Audio Fingerprint:</span><span class="data-value">${d.audioFingerprint}</span></div>
+            <div class="data-item"><span class="data-label">Battery Fingerprint:</span><span class="data-value">${d.batteryFingerprint}</span></div>
+            <div class="data-item"><span class="data-label">Java:</span><span class="data-value">${d.java}</span></div>
+            <div class="data-item"><span class="data-label">Flash:</span><span class="data-value">${d.flash}</span></div>
+            <div class="data-item"><span class="data-label">Silverlight:</span><span class="data-value">${d.silverlight} ${d.silverlightVersion}</span></div>
+            <div class="data-item"><span class="data-label">Permissions API:</span><span class="data-value">${d.permissions}</span></div>
+            <div class="data-item"><span class="data-label">Media Devices:</span><span class="data-value">${d.mediaDevices}</span></div>
+            <div class="data-item"><span class="data-label">Geolocation:</span><span class="data-value">${d.geolocation}</span></div>
+            <div class="data-item"><span class="data-label">Battery API:</span><span class="data-value">${d.battery}</span></div>
+            <div class="data-item"><span class="data-label">User Agent Data:</span><span class="data-value">${d.userAgentData}</span></div>
+            <div class="data-item"><span class="data-label">Timezone Offset:</span><span class="data-value">${d.timezoneOffset}</span></div>
+        `;
+    }
+    function populateRawData() {
+        const hashDataRaw = document.getElementById('hashDataRaw');
+        const allDataRaw = document.getElementById('allDataRaw');
         
-        // Override the original generateUniqueId function to populate the grid
-        const originalGenerateUniqueId = window.generateUniqueId;
-        window.generateUniqueId = async function() {
-            const result = await originalGenerateUniqueId();
-            if (result) {
-                window.currentFingerprintData = result;
-                populateDataGrids(result);
-            }
-            return result;
+        if (hashDataRaw && stableDataCache) {
+            hashDataRaw.textContent = JSON.stringify(stableDataCache, null, 2);
+        }
+        if (allDataRaw && allDataCache) {
+            allDataRaw.textContent = JSON.stringify(allDataCache, null, 2);
+        }
+    }
+   
+    // Export function - moved to exportCleanData() function below
+    function asyncexportCleanData() {
+        if (!stableDataCache || !allDataCache) {
+            alert('❌ No data to export. Please generate fingerprint first.');
+            return;
+        }
+        
+        const timestamp = new Date().toISOString();
+        const data = {
+            timestamp,
+            uniqueVisitorId: uniqueIdCache,
+            confidence: confidenceCache,
+            timezone: stableDataCache.timezone,
+            ipData: ipDataCache,
+            stableData: stableDataCache,
+            allData: allDataCache
         };
         
-        // Function to populate all data grids
-        function populateDataGrids(data) {
-            populateOverviewGrid(data);
-            populateBrowserGrid(data);
-            populateSystemGrid(data);
-            populateHardwareGrid(data);
-            populatePrivacyGrid(data);
-            populateAdvancedGrid(data);
-            populateRawData(data);
+        const fileName = `fingerprint-${uniqueIdCache || 'unknown'}.json`;
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // Initialize fingerprinting on page load
+    function initializeFingerprinting() {
+        // Wait for DOM to be fully loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', refreshFingerprint);
+        } else {
+            refreshFingerprint();
         }
-        
-        function populateOverviewGrid(data) {
-            const grid = document.getElementById('overviewGrid');
-            grid.innerHTML = `
-                <div class="data-item">
-                    <span class="data-label">Status:</span>
-                    <span class="data-value"><span class="status-indicator status-success"></span>Active</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Hash:</span>
-                    <span class="data-value">${data.hash}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Confidence:</span>
-                    <span class="data-value">${data.confidenceScore}% (${data.confidenceLevel})</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Browser:</span>
-                    <span class="data-value">${data.clientJSData.browser} ${data.clientJSData.browserVersion}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">OS:</span>
-                    <span class="data-value">${data.clientJSData.os} ${data.clientJSData.osVersion}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Device:</span>
-                    <span class="data-value">${data.clientJSData.device} (${data.clientJSData.deviceType})</span>
-                </div>
-            `;
-        }
-        
-        function populateBrowserGrid(data) {
-            const grid = document.getElementById('browserGrid');
-            const clientJSData = data.clientJSData;
-            const enhancedData = data.enhancedData;
-            
-            grid.innerHTML = `
-                <div class="data-item">
-                    <span class="data-label">User Agent:</span>
-                    <span class="data-value">${clientJSData.userAgent}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Browser:</span>
-                    <span class="data-value">${clientJSData.browser} ${clientJSData.browserVersion}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Engine:</span>
-                    <span class="data-value">${clientJSData.engine} ${clientJSData.engineVersion}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Language:</span>
-                    <span class="data-value">${clientJSData.language} (${clientJSData.systemLanguage})</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Timezone:</span>
-                    <span class="data-value">${clientJSData.timezone}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Chrome:</span>
-                    <span class="data-value">${clientJSData.isChrome}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Firefox:</span>
-                    <span class="data-value">${clientJSData.isFirefox}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Safari:</span>
-                    <span class="data-value">${clientJSData.isSafari}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is IE:</span>
-                    <span class="data-value">${clientJSData.isIE}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Opera:</span>
-                    <span class="data-value">${clientJSData.isOpera}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Mobile:</span>
-                    <span class="data-value">${clientJSData.isMobile}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">WebDriver:</span>
-                    <span class="data-value">${enhancedData.webdriver}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Do Not Track:</span>
-                    <span class="data-value">${enhancedData.doNotTrack}</span>
-                </div>
-            `;
-        }
-        
-        function populateSystemGrid(data) {
-            const grid = document.getElementById('systemGrid');
-            const clientJSData = data.clientJSData;
-            const enhancedData = data.enhancedData;
-            
-            grid.innerHTML = `
-                <div class="data-item">
-                    <span class="data-label">OS:</span>
-                    <span class="data-value">${clientJSData.os} ${clientJSData.osVersion}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Windows:</span>
-                    <span class="data-value">${clientJSData.isWindows}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Mac:</span>
-                    <span class="data-value">${clientJSData.isMac}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Linux:</span>
-                    <span class="data-value">${clientJSData.isLinux}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Ubuntu:</span>
-                    <span class="data-value">${clientJSData.isUbuntu}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Is Solaris:</span>
-                    <span class="data-value">${clientJSData.isSolaris}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">CPU:</span>
-                    <span class="data-value">${clientJSData.cpu}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Device Vendor:</span>
-                    <span class="data-value">${clientJSData.deviceVendor}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Platform:</span>
-                    <span class="data-value">${enhancedData.platform}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Vendor:</span>
-                    <span class="data-value">${enhancedData.vendor}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Product:</span>
-                    <span class="data-value">${enhancedData.product}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">App Name:</span>
-                    <span class="data-value">${enhancedData.appName}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">App Version:</span>
-                    <span class="data-value">${enhancedData.appVersion}</span>
-                </div>
-            `;
-        }
-        
-        function populateHardwareGrid(data) {
-            const grid = document.getElementById('hardwareGrid');
-            const clientJSData = data.clientJSData;
-            const enhancedData = data.enhancedData;
-            
-            grid.innerHTML = `
-                <div class="data-item">
-                    <span class="data-label">Device:</span>
-                    <span class="data-value">${clientJSData.device} (${clientJSData.deviceType})</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Color Depth:</span>
-                    <span class="data-value">${clientJSData.colorDepth}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Device X DPI:</span>
-                    <span class="data-value">${clientJSData.deviceXDPI}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Device Y DPI:</span>
-                    <span class="data-value">${clientJSData.deviceYDPI}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Device Pixel Ratio:</span>
-                    <span class="data-value">${enhancedData.devicePixelRatio}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Hardware Concurrency:</span>
-                    <span class="data-value">${enhancedData.hardwareConcurrency}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Device Memory:</span>
-                    <span class="data-value">${enhancedData.deviceMemory}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Max Touch Points:</span>
-                    <span class="data-value">${enhancedData.maxTouchPoints}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Pointer Enabled:</span>
-                    <span class="data-value">${enhancedData.pointerEnabled}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Connection Type:</span>
-                    <span class="data-value">${enhancedData.connectionType}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Plugins Count:</span>
-                    <span class="data-value">${clientJSData.plugins.split(',').length}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Fonts Count:</span>
-                    <span class="data-value">${clientJSData.fonts.split(',').length}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">MIME Types Count:</span>
-                    <span class="data-value">${clientJSData.mimeTypes.split(',').length}</span>
-                </div>
-            `;
-        }
-        
-        function populatePrivacyGrid(data) {
-            const grid = document.getElementById('privacyGrid');
-            const clientJSData = data.clientJSData;
-            const enhancedData = data.enhancedData;
-            const privacyData = data.privacyData;
-            
-            grid.innerHTML = `
-                <div class="data-item">
-                    <span class="data-label">Session Storage:</span>
-                    <span class="data-value">${clientJSData.sessionStorage}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Local Storage:</span>
-                    <span class="data-value">${clientJSData.localStorage}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Cookies:</span>
-                    <span class="data-value">${clientJSData.cookies}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Cookie Enabled:</span>
-                    <span class="data-value">${enhancedData.cookieEnabled}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Current Resolution:</span>
-                    <span class="data-value">${clientJSData.currentResolution}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Available Resolution:</span>
-                    <span class="data-value">${clientJSData.availableResolution}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Window Inner Width:</span>
-                    <span class="data-value">${privacyData.windowInnerWidth}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Window Inner Height:</span>
-                    <span class="data-value">${privacyData.windowInnerHeight}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Window Outer Width:</span>
-                    <span class="data-value">${privacyData.windowOuterWidth}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Window Outer Height:</span>
-                    <span class="data-value">${privacyData.windowOuterHeight}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Screen Avail Width:</span>
-                    <span class="data-value">${privacyData.screenAvailWidth}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Screen Avail Height:</span>
-                    <span class="data-value">${privacyData.screenAvailHeight}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Screen Width:</span>
-                    <span class="data-value">${privacyData.screenWidth}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Screen Height:</span>
-                    <span class="data-value">${privacyData.screenHeight}</span>
-                </div>
-            `;
-        }
-        
-        function populateAdvancedGrid(data) {
-            const grid = document.getElementById('advancedGrid');
-            const clientJSData = data.clientJSData;
-            const enhancedData = data.enhancedData;
-            
-            grid.innerHTML = `
-                <div class="data-item">
-                    <span class="data-label">Canvas Print:</span>
-                    <span class="data-value">${clientJSData.canvasPrint}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Screen Print:</span>
-                    <span class="data-value">${clientJSData.screenPrint}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">WebGL Fingerprint:</span>
-                    <span class="data-value">${enhancedData.webglFingerprint}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Audio Fingerprint:</span>
-                    <span class="data-value">${enhancedData.audioFingerprint.substring(0, 30)}...</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Battery Fingerprint:</span>
-                    <span class="data-value">${enhancedData.batteryFingerprint.substring(0, 30)}...</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Java:</span>
-                    <span class="data-value">${clientJSData.java}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Flash:</span>
-                    <span class="data-value">${clientJSData.flash}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Silverlight:</span>
-                    <span class="data-value">${clientJSData.silverlight} ${clientJSData.silverlightVersion}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Permissions API:</span>
-                    <span class="data-value">${enhancedData.permissions}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Media Devices:</span>
-                    <span class="data-value">${enhancedData.mediaDevices}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Geolocation:</span>
-                    <span class="data-value">${enhancedData.geolocation}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Battery API:</span>
-                    <span class="data-value">${enhancedData.battery}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">User Agent Data:</span>
-                    <span class="data-value">${enhancedData.userAgentData}</span>
-                </div>
-                <div class="data-item">
-                    <span class="data-label">Timezone Offset:</span>
-                    <span class="data-value">${enhancedData.timezoneOffset}</span>
-                </div>
-            `;
-        }
-        
-        function populateRawData(data) {
-            document.getElementById('hashDataRaw').textContent = JSON.stringify(data.summaryData, null, 2);
-            document.getElementById('allDataRaw').textContent = JSON.stringify(data.allData, null, 2);
-        }
+    }
+    
+    // Initialize when window loads
+    window.addEventListener('load', initializeFingerprinting);
     </script>
 </body>
 </html> 
