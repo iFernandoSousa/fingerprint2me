@@ -4,7 +4,7 @@
     if (typeof define === 'function' && define.amd) {
         define(['./client.min.js'], factory);
     } else if (typeof exports === 'object') {
-        module.exports = factory(require('./client.min.js'));
+        module.exports = factory(require('../dist/client.min.js'));
     } else {
         root.fingerprint2me = factory(root.ClientJS);
     }
