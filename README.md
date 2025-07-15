@@ -17,7 +17,7 @@ A comprehensive browser fingerprinting library that generates unique visitor IDs
 ### CDN (Recommended)
 ```html
 <script src="https://cdn.jsdelivr.net/npm/clientjs@0.2.1/dist/client.min.js"></script>
-<script src="path/to/fingerprint2me.js"></script>
+<script src="path/to/fingerprint2me.min.js"></script>
 ```
 
 ### NPM (if using in Node.js environment)
@@ -26,7 +26,7 @@ npm install clientjs
 ```
 
 ### Direct Download
-Download `fingerprint2me.js` and `client.min.js` from this repository.
+Download `fingerprint2me.min.js` and `client.min.js` from this repository.
 
 ## Basic Usage
 
@@ -35,8 +35,8 @@ Download `fingerprint2me.js` and `client.min.js` from this repository.
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="client.min.js"></script>
-    <script src="fingerprint2me.js"></script>
+    <script src="dist/client.min.js"></script>
+    <script src="dist/fingerprint2me.min.js"></script>
 </head>
 <body>
     <script>
@@ -318,7 +318,7 @@ fingerprint2me.getUniqueVisitorId().then(result => {
 
 ### Building from Source
 ```bash
-git clone https://github.com/yourusername/fingerprint2me.git
+git clone https://github.com/iFernandoSousa/fingerprint2me.git
 cd fingerprint2me
 # No build process required - vanilla JavaScript
 ```
@@ -341,8 +341,7 @@ MIT License - see LICENSE file for details.
 ## Support
 
 For issues and questions:
-- GitHub Issues: [Create an issue](https://github.com/yourusername/fingerprint2me/issues)
-- Email: support@fingerprint2me.com
+- GitHub Issues: [Create an issue](https://github.com/iFernandoSousa/fingerprint2me/issues)
 
 ---
 
