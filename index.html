@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClientJS Advanced Browser Fingerprint</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .id-display {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .id-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .id-value {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 5px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .tab.active {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 10px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .data-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .data-label {
+            font-weight: bold;
+            color: #ffd700;
+        }
+        
+        .data-value {
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            font-size: 12px;
+        }
+        
+        .info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #4CAF50; }
+        .status-warning { background: #FF9800; }
+        .status-error { background: #F44336; }
+        .status-info { background: #2196F3; }
+        
+        .comparison-section {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .comparison-column {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .comparison-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #ffd700;
+        }
+        
+        @media (max-width: 768px) {
+            .data-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Advanced Browser Fingerprint Generator</h1>
+        
+        <div class="id-display">
+            <span class="id-label">Your Browser Fingerprint:</span>
+            <div class="id-value" id="uniqueId">Generating...</div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn" onclick="generateNewId()">🔄 Generate New ID</button>
+            <button class="btn btn-success" onclick="exportCleanData()">📤 Export Data</button>
+            <button class="btn btn-secondary" onclick="clearData()">🗑️ Clear Data</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('overview')">📋 Overview</button>
+            <button class="tab" onclick="showTab('browser')">🌐 Browser</button>
+            <button class="tab" onclick="showTab('system')">💻 System</button>
+            <button class="tab" onclick="showTab('hardware')">🔧 Hardware</button>
+            <button class="tab" onclick="showTab('privacy')">🛡️ Privacy</button>
+            <button class="tab" onclick="showTab('advanced')">⚡ Advanced</button>
+            <button class="tab" onclick="showTab('raw')">📄 Raw Data</button>
+        </div>
+        
+        <div id="overview" class="tab-content active">
+            <div class="data-grid" id="overviewGrid">
+                <div class="data-item">
+                    <span class="data-label">Status:</span>
+                    <span class="data-value" id="statusValue">Loading...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="browser" class="tab-content">
+            <div class="data-grid" id="browserGrid">
+                <!-- Browser data will be populated here -->
+            </div>
+        </div>
+        
+        <div id="system" class="tab-content">
+            <div class="data-grid" id="systemGrid">
+                <!-- System data will be populated here -->
+            </div>
+        </div>
+        
+        <div id="hardware" class="tab-content">
+            <div class="data-grid" id="hardwareGrid">
+                <!-- Hardware data will be populated here -->
+            </div>
+        </div>
+        
+        <div id="privacy" class="tab-content">
+            <div class="data-grid" id="privacyGrid">
+                <!-- Privacy detection data will be populated here -->
+            </div>
+        </div>
+        
+        <div id="advanced" class="tab-content">
+            <div class="data-grid" id="advancedGrid">
+                <!-- Advanced fingerprinting data will be populated here -->
+            </div>
+        </div>
+        
+        <div id="raw" class="tab-content">
+            <div class="comparison-section">
+                <h3>Hash Data (Stable)</h3>
+                <pre id="hashDataRaw" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;"></pre>
+            </div>
+            <div class="comparison-section">
+                <h3>All Data (Including Privacy Detection)</h3>
+                <pre id="allDataRaw" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;"></pre>
+            </div>
+        </div>
+        
+        <div class="info">
+            <strong>About this fingerprint:</strong><br>
+            This tool collects comprehensive browser and device information to create a unique fingerprint. 
+            The data is organized into categories for easy comparison across different browsers and privacy modes.
+            The SHA-256 hash is generated from stable hardware characteristics, ensuring consistent identification.
+        </div>
+    </div>
+
+    <!-- Include ClientJS library -->
+    <script src="client.min.js"></script>
+    <script>
+        // Check if ClientJS loaded successfully
+        window.addEventListener('load', function() {
+            if (typeof ClientJS !== 'undefined') {
+                window.dispatchEvent(new Event('clientjs-loaded'));
+            } else {
+                document.getElementById('uniqueId').textContent = 'Failed to load ClientJS library';
+            }
+        });
+    </script>
+    <script src="script.js"></script>
+    <script>
+        // Tab functionality
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+        
+
+        
+        // Clear data functionality
+        function clearData() {
+            if (confirm('Are you sure you want to clear all displayed data?')) {
+                document.getElementById('uniqueId').textContent = 'Data cleared';
+                const grids = ['overviewGrid', 'browserGrid', 'systemGrid', 'hardwareGrid', 'privacyGrid', 'advancedGrid'];
+                grids.forEach(gridId => {
+                    const grid = document.getElementById(gridId);
+                    if (grid) grid.innerHTML = '';
+                });
+                document.getElementById('hashDataRaw').textContent = '';
+                document.getElementById('allDataRaw').textContent = '';
+                window.currentFingerprintData = null;
+            }
+        }
+        
+        // Override the original generateUniqueId function to populate the grid
+        const originalGenerateUniqueId = window.generateUniqueId;
+        window.generateUniqueId = async function() {
+            const result = await originalGenerateUniqueId();
+            if (result) {
+                window.currentFingerprintData = result;
+                populateDataGrids(result);
+            }
+            return result;
+        };
+        
+        // Function to populate all data grids
+        function populateDataGrids(data) {
+            populateOverviewGrid(data);
+            populateBrowserGrid(data);
+            populateSystemGrid(data);
+            populateHardwareGrid(data);
+            populatePrivacyGrid(data);
+            populateAdvancedGrid(data);
+            populateRawData(data);
+        }
+        
+        function populateOverviewGrid(data) {
+            const grid = document.getElementById('overviewGrid');
+            grid.innerHTML = `
+                <div class="data-item">
+                    <span class="data-label">Status:</span>
+                    <span class="data-value"><span class="status-indicator status-success"></span>Active</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Hash:</span>
+                    <span class="data-value">${data.hash}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Confidence:</span>
+                    <span class="data-value">${data.confidenceScore}% (${data.confidenceLevel})</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Browser:</span>
+                    <span class="data-value">${data.clientJSData.browser} ${data.clientJSData.browserVersion}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">OS:</span>
+                    <span class="data-value">${data.clientJSData.os} ${data.clientJSData.osVersion}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Device:</span>
+                    <span class="data-value">${data.clientJSData.device} (${data.clientJSData.deviceType})</span>
+                </div>
+            `;
+        }
+        
+        function populateBrowserGrid(data) {
+            const grid = document.getElementById('browserGrid');
+            const clientJSData = data.clientJSData;
+            const enhancedData = data.enhancedData;
+            
+            grid.innerHTML = `
+                <div class="data-item">
+                    <span class="data-label">User Agent:</span>
+                    <span class="data-value">${clientJSData.userAgent}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Browser:</span>
+                    <span class="data-value">${clientJSData.browser} ${clientJSData.browserVersion}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Engine:</span>
+                    <span class="data-value">${clientJSData.engine} ${clientJSData.engineVersion}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Language:</span>
+                    <span class="data-value">${clientJSData.language} (${clientJSData.systemLanguage})</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Timezone:</span>
+                    <span class="data-value">${clientJSData.timezone}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Chrome:</span>
+                    <span class="data-value">${clientJSData.isChrome}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Firefox:</span>
+                    <span class="data-value">${clientJSData.isFirefox}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Safari:</span>
+                    <span class="data-value">${clientJSData.isSafari}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is IE:</span>
+                    <span class="data-value">${clientJSData.isIE}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Opera:</span>
+                    <span class="data-value">${clientJSData.isOpera}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Mobile:</span>
+                    <span class="data-value">${clientJSData.isMobile}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">WebDriver:</span>
+                    <span class="data-value">${enhancedData.webdriver}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Do Not Track:</span>
+                    <span class="data-value">${enhancedData.doNotTrack}</span>
+                </div>
+            `;
+        }
+        
+        function populateSystemGrid(data) {
+            const grid = document.getElementById('systemGrid');
+            const clientJSData = data.clientJSData;
+            const enhancedData = data.enhancedData;
+            
+            grid.innerHTML = `
+                <div class="data-item">
+                    <span class="data-label">OS:</span>
+                    <span class="data-value">${clientJSData.os} ${clientJSData.osVersion}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Windows:</span>
+                    <span class="data-value">${clientJSData.isWindows}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Mac:</span>
+                    <span class="data-value">${clientJSData.isMac}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Linux:</span>
+                    <span class="data-value">${clientJSData.isLinux}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Ubuntu:</span>
+                    <span class="data-value">${clientJSData.isUbuntu}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Is Solaris:</span>
+                    <span class="data-value">${clientJSData.isSolaris}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">CPU:</span>
+                    <span class="data-value">${clientJSData.cpu}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Device Vendor:</span>
+                    <span class="data-value">${clientJSData.deviceVendor}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Platform:</span>
+                    <span class="data-value">${enhancedData.platform}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Vendor:</span>
+                    <span class="data-value">${enhancedData.vendor}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Product:</span>
+                    <span class="data-value">${enhancedData.product}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">App Name:</span>
+                    <span class="data-value">${enhancedData.appName}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">App Version:</span>
+                    <span class="data-value">${enhancedData.appVersion}</span>
+                </div>
+            `;
+        }
+        
+        function populateHardwareGrid(data) {
+            const grid = document.getElementById('hardwareGrid');
+            const clientJSData = data.clientJSData;
+            const enhancedData = data.enhancedData;
+            
+            grid.innerHTML = `
+                <div class="data-item">
+                    <span class="data-label">Device:</span>
+                    <span class="data-value">${clientJSData.device} (${clientJSData.deviceType})</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Color Depth:</span>
+                    <span class="data-value">${clientJSData.colorDepth}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Device X DPI:</span>
+                    <span class="data-value">${clientJSData.deviceXDPI}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Device Y DPI:</span>
+                    <span class="data-value">${clientJSData.deviceYDPI}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Device Pixel Ratio:</span>
+                    <span class="data-value">${enhancedData.devicePixelRatio}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Hardware Concurrency:</span>
+                    <span class="data-value">${enhancedData.hardwareConcurrency}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Device Memory:</span>
+                    <span class="data-value">${enhancedData.deviceMemory}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Max Touch Points:</span>
+                    <span class="data-value">${enhancedData.maxTouchPoints}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Pointer Enabled:</span>
+                    <span class="data-value">${enhancedData.pointerEnabled}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Connection Type:</span>
+                    <span class="data-value">${enhancedData.connectionType}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Plugins Count:</span>
+                    <span class="data-value">${clientJSData.plugins.split(',').length}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Fonts Count:</span>
+                    <span class="data-value">${clientJSData.fonts.split(',').length}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">MIME Types Count:</span>
+                    <span class="data-value">${clientJSData.mimeTypes.split(',').length}</span>
+                </div>
+            `;
+        }
+        
+        function populatePrivacyGrid(data) {
+            const grid = document.getElementById('privacyGrid');
+            const clientJSData = data.clientJSData;
+            const enhancedData = data.enhancedData;
+            const privacyData = data.privacyData;
+            
+            grid.innerHTML = `
+                <div class="data-item">
+                    <span class="data-label">Session Storage:</span>
+                    <span class="data-value">${clientJSData.sessionStorage}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Local Storage:</span>
+                    <span class="data-value">${clientJSData.localStorage}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Cookies:</span>
+                    <span class="data-value">${clientJSData.cookies}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Cookie Enabled:</span>
+                    <span class="data-value">${enhancedData.cookieEnabled}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Current Resolution:</span>
+                    <span class="data-value">${clientJSData.currentResolution}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Available Resolution:</span>
+                    <span class="data-value">${clientJSData.availableResolution}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Window Inner Width:</span>
+                    <span class="data-value">${privacyData.windowInnerWidth}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Window Inner Height:</span>
+                    <span class="data-value">${privacyData.windowInnerHeight}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Window Outer Width:</span>
+                    <span class="data-value">${privacyData.windowOuterWidth}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Window Outer Height:</span>
+                    <span class="data-value">${privacyData.windowOuterHeight}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Screen Avail Width:</span>
+                    <span class="data-value">${privacyData.screenAvailWidth}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Screen Avail Height:</span>
+                    <span class="data-value">${privacyData.screenAvailHeight}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Screen Width:</span>
+                    <span class="data-value">${privacyData.screenWidth}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Screen Height:</span>
+                    <span class="data-value">${privacyData.screenHeight}</span>
+                </div>
+            `;
+        }
+        
+        function populateAdvancedGrid(data) {
+            const grid = document.getElementById('advancedGrid');
+            const clientJSData = data.clientJSData;
+            const enhancedData = data.enhancedData;
+            
+            grid.innerHTML = `
+                <div class="data-item">
+                    <span class="data-label">Canvas Print:</span>
+                    <span class="data-value">${clientJSData.canvasPrint}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Screen Print:</span>
+                    <span class="data-value">${clientJSData.screenPrint}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">WebGL Fingerprint:</span>
+                    <span class="data-value">${enhancedData.webglFingerprint}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Audio Fingerprint:</span>
+                    <span class="data-value">${enhancedData.audioFingerprint.substring(0, 30)}...</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Battery Fingerprint:</span>
+                    <span class="data-value">${enhancedData.batteryFingerprint.substring(0, 30)}...</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Java:</span>
+                    <span class="data-value">${clientJSData.java}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Flash:</span>
+                    <span class="data-value">${clientJSData.flash}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Silverlight:</span>
+                    <span class="data-value">${clientJSData.silverlight} ${clientJSData.silverlightVersion}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Permissions API:</span>
+                    <span class="data-value">${enhancedData.permissions}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Media Devices:</span>
+                    <span class="data-value">${enhancedData.mediaDevices}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Geolocation:</span>
+                    <span class="data-value">${enhancedData.geolocation}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Battery API:</span>
+                    <span class="data-value">${enhancedData.battery}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">User Agent Data:</span>
+                    <span class="data-value">${enhancedData.userAgentData}</span>
+                </div>
+                <div class="data-item">
+                    <span class="data-label">Timezone Offset:</span>
+                    <span class="data-value">${enhancedData.timezoneOffset}</span>
+                </div>
+            `;
+        }
+        
+        function populateRawData(data) {
+            document.getElementById('hashDataRaw').textContent = JSON.stringify(data.summaryData, null, 2);
+            document.getElementById('allDataRaw').textContent = JSON.stringify(data.allData, null, 2);
+        }
+    </script>
+</body>
+</html> 
