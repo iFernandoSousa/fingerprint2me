@@ -497,8 +497,7 @@
         }
     }
    
-    // Export function - moved to exportCleanData() function below
-    function asyncexportCleanData() {
+    function exportCleanData() {
         if (!stableDataCache || !allDataCache) {
             alert('❌ No data to export. Please generate fingerprint first.');
             return;
