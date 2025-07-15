@@ -1,4 +1,4 @@
-# Fingerprint2Me.js
+# Fingerprint2me.js
 
 A comprehensive browser fingerprinting library that generates unique visitor IDs based on device and browser characteristics. Built with privacy compliance in mind and supports GDPR requirements.
 
