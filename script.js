@@ -91,8 +91,7 @@ async function generateBatteryFingerprint() {
         if (navigator.getBattery) {
             const battery = await navigator.getBattery();
             return {
-                charging: battery.charging,
-                level: battery.level
+                charging: battery.charging
             };
         }
         return { error: 'not_supported' };
