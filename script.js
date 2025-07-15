@@ -321,7 +321,7 @@ function generateHardwareFingerprint() {
             maxTouchPoints: navigator.maxTouchPoints || 0,
             pointerEnabled: navigator.pointerEnabled || false,
             msMaxTouchPoints: navigator.msMaxTouchPoints || 0,
-            userAgentData: navigator.userAgentData ? navigator.userAgentData : 'not_supported'
+            userAgentData: navigator.userAgentData || 'not_supported'
         };
         
         return hardware;
@@ -456,6 +456,15 @@ function generateConnectionFingerprint() {
     }
 }
 
+function isBrave() {
+    const userAgentData = navigator.userAgentData;
+    return (
+        userAgentData &&
+        Array.isArray(userAgentData.brands) &&
+        userAgentData.brands.some(b => b.brand === 'Brave')
+    );
+} 
+
 function initializeClientJS() {
     try {
         if (typeof ClientJS !== 'undefined') {
@@ -584,7 +593,7 @@ async function generateUniqueId() {
             doNotTrack: navigator.doNotTrack || 'unknown',
             cookieEnabled: navigator.cookieEnabled,
             onLine: navigator.onLine,
-            userAgentData: navigator.userAgentData ? JSON.stringify(navigator.userAgentData) : 'not_supported',
+            userAgentData: navigator.userAgentData || 'not_supported',
             webdriver: navigator.webdriver || false,
             permissions: navigator.permissions ? 'supported' : 'not_supported',
             mediaDevices: navigator.mediaDevices ? 'supported' : 'not_supported',
@@ -642,7 +651,25 @@ async function generateUniqueId() {
         delete stableData.fingerprint; // Remove ClientJS fingerprint as it varies between modes
         
         // Browser-specific exclusions for privacy mode differences
-        if (stableData.browser === 'Safari') {
+        if (isBrave()) {
+            console.log('Brave detected');
+            delete stableData.availableResolution;
+            if (stableData.enhancedCanvasFingerprint.dataURL.startsWith('data:image/png;base64,')) {
+                const base64Data = stableData.enhancedCanvasFingerprint.dataURL.substring(22); // Remove the data URL prefix
+                stableData.enhancedCanvasFingerprint.dataURL = 'data:image/png;base64,' + base64Data.substring(0, 64);
+            }
+            delete stableData.currentResolution;
+            delete stableData.hardwareConcurrency;
+            delete stableData.deviceMemory;
+            delete stableData.canvasPrint;
+            delete stableData.audioFingerprint;
+            delete stableData.mimeTypesFingerprint;
+            delete stableData.hardwareFingerprint;
+            delete stableData.plugins;
+            delete stableData.pluginsFingerprint;
+            delete stableData.screenFingerprint;
+            delete stableData.screenPrint;
+        } else if (stableData.browser === 'Safari') {
             delete stableData.availableResolution; // Safari: available resolution may vary in private mode
             delete stableData.canvasPrint; // Canvas fingerprint may vary in Safari private mode
             delete stableData.currentResolution; // Safari: current resolution may vary in private mode
@@ -653,28 +680,26 @@ async function generateUniqueId() {
                 const base64Data = stableData.enhancedCanvasFingerprint.dataURL.substring(22); // Remove the data URL prefix
                 stableData.enhancedCanvasFingerprint.dataURL = 'data:image/png;base64,' + base64Data.substring(0, 128);
             }
-        }else if (stableData.browser === 'Firefox') {
+        } else if (stableData.browser === 'Firefox') {
             delete stableData.canvasPrint;   // Firefox: canvas print changes in private mode
             delete stableData.fonts;         // Firefox: fonts list changes in private mode
             delete stableData.doNotTrack;    // Firefox: doNotTrack changes in private mode
-        } else if (stableData.browser === 'Chrome') {
-            delete stableData.mediaDevicesFingerprint; // Chrome: media devices change in private mode
-            delete stableData.languageFingerprint;     // Chrome: language fingerprint changes in private mode
-            delete stableData.windowInnerWidth;        // Chrome: window dimensions change in private mode
-            delete stableData.windowOuterWidth;        // Chrome: window dimensions change in private mode
         } else if (stableData.browser === 'Opera') {
             delete stableData.languageFingerprint;     // Opera: language fingerprint changes in private mode
             delete stableData.windowOuterWidth;        // Opera: window dimensions change in private mode
             delete stableData.windowInnerWidth;        // Opera: window dimensions change in private mode
         } else if (stableData.browser === 'Edge') {
             delete stableData.languageFingerprint;     // Edge: language fingerprint changes in private mode
+        } else if (stableData.browser === 'Chrome') {
+            delete stableData.mediaDevicesFingerprint; // Chrome: media devices change in private mode
+            delete stableData.languageFingerprint;     // Chrome: language fingerprint changes in private mode
+            delete stableData.windowInnerWidth;        // Chrome: window dimensions change in private mode
+            delete stableData.windowOuterWidth;        // Chrome: window dimensions change in private mode
         }
         const stableString = Object.values(stableData).join('|');
-        const combinedString = stableString;
         
         // Generate hash with better collision resistance
-        const hash = await generateHash(combinedString);
-        
+        const hash = await generateHash(stableString);
         
         // Calculate confidence score based on weighted privacy indicators
         function calculateConfidenceScore() {
@@ -1074,4 +1099,4 @@ function exportCleanData() {
 // Export functions for potential external use
 window.generateUniqueId = generateUniqueId;
 window.generateNewId = generateNewId;
-window.exportCleanData = exportCleanData; 
+window.exportCleanData = exportCleanData;
